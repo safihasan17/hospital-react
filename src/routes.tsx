@@ -163,8 +163,8 @@ export const routes = createBrowserRouter([
       // User
       { path:"/users", element:<UserManage/> },
       { path:"/add-user", element:<UserAdd/> },
-      { path:"/edit-user/:id", element:<UserEdit/> },
-      { path:"/user-details/:id", element:<UserDetails/> },
+      { path:"/users/:id/edit", element:<UserEdit/> },
+      { path:"/users/:id", element:<UserDetails/> },
 
       // Role
       { path:"/roles", element:<RoleManage/> },

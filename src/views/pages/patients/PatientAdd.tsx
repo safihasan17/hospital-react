@@ -1,8 +1,80 @@
+import { useEffect, useState, type FormEvent } from "react";
 import { Link } from "react-router";
+import { api } from "../../../api";
+import {
+  defaultPatient,
+  errorPatient,
+  type Patient,
+} from "../../../interfaces/Patient";
+import ConfirmModal from "../../../components/ConfirmModoal";
+import PatientForm from "../../../components/Patientform";
 
 function PatientAdd() {
+  const [patient, setPatient] = useState<Patient>({ ...defaultPatient });
+  const [error, setError] = useState(errorPatient);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [message, setMessage] = useState<{
+    type: "success" | "danger";
+    text: string;
+  } | null>(null);
+
+  // message 3 second pore nijei soriye jabe
+  useEffect(() => {
+    if (!message) return;
+    const timer = setTimeout(() => setMessage(null), 3000);
+    return () => clearTimeout(timer);
+  }, [message]);
+
+  // form submit hole shudhu modal khulbe
+  const handleSubmit = (e: FormEvent) => {
+    e.preventDefault();
+    setShowConfirm(true);
+  };
+
+  const handleClear = () => {
+    setPatient({ ...defaultPatient });
+    setError(errorPatient);
+  };
+
+  // modal-er "Add Patient" button e click korle asol API call hobe
+  const confirmAdd = () => {
+    api
+      .post("patients", patient)
+      .then(function (res) {
+        if (res.data.success) {
+          setMessage({ type: "success", text: res.data.success });
+          handleClear();
+        }
+      })
+      .catch(function (err) {
+        console.log(err.response?.data);
+        if (err.response?.status === 422) {
+          setError(err.response.data.errors);
+        } else {
+          setMessage({ type: "danger", text: "Failed to add patient" });
+        }
+      })
+      .finally(function () {
+        setShowConfirm(false);
+      });
+  };
+
   return (
     <>
+      {message && (
+        <div
+          className={`alert alert-${message.type} alert-dismissible`}
+          role="alert"
+        >
+          {message.text}
+          <button
+            type="button"
+            className="btn-close"
+            aria-label="Close"
+            onClick={() => setMessage(null)}
+          ></button>
+        </div>
+      )}
       <div className="row">
         <div className="col-12">
           <div className="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
@@ -11,7 +83,9 @@ function PatientAdd() {
               <p className="mb-0">Create a new patient record</p>
             </div>
             <div className="d-flex gap-2">
-              <Link to="/patients" className="btn btn-primary">Go to Patients List</Link>
+              <Link to="/patients" className="btn btn-primary">
+                Go to Patients List
+              </Link>
             </div>
           </div>
         </div>
@@ -20,57 +94,30 @@ function PatientAdd() {
         <div className="col-12">
           <div className="card">
             <div className="card-body p-4">
-              {/* Add your own submit logic here (useState / API call) */}
-              <form onSubmit={(e) => e.preventDefault()}>
-                <div className="row">
-                <div className="col-md-6 mb-3">
-                  <label htmlFor="name" className="form-label">Full name <span className="text-danger">*</span></label>
-                  <input id="name" type="text" className="form-control" required />
-                </div>
-                <div className="col-md-6 mb-3">
-                  <label htmlFor="dob" className="form-label">Date of birth</label>
-                  <input id="dob" type="date" className="form-control" />
-                </div>
-                <div className="col-md-6 mb-3">
-                  <label htmlFor="gender" className="form-label">Gender</label>
-                  <select id="gender" className="form-select">
-                    <option value="">Select…</option>
-                    <option value="Male">Male</option><option value="Female">Female</option><option value="Other">Other</option>
-                  </select>
-                </div>
-                <div className="col-md-6 mb-3">
-                  <label htmlFor="blood_group" className="form-label">Blood group</label>
-                  <select id="blood_group" className="form-select">
-                    <option value="">Select…</option>
-                    <option value="A+">A+</option><option value="A-">A-</option><option value="B+">B+</option><option value="B-">B-</option><option value="AB+">AB+</option><option value="AB-">AB-</option><option value="O+">O+</option><option value="O-">O-</option>
-                  </select>
-                </div>
-                <div className="col-md-6 mb-3">
-                  <label htmlFor="phone" className="form-label">Phone</label>
-                  <input id="phone" type="tel" className="form-control" placeholder="e.g. 01XXX-XXXXXX" />
-                </div>
-                <div className="col-md-6 mb-3">
-                  <label htmlFor="emergency_contact" className="form-label">Emergency contact</label>
-                  <input id="emergency_contact" type="tel" className="form-control" />
-                </div>
-                <div className="col-md-6 mb-3">
-                  <label htmlFor="guardian_name" className="form-label">Guardian name</label>
-                  <input id="guardian_name" type="text" className="form-control" />
-                </div>
-                <div className="col-12 mb-3">
-                  <label htmlFor="address" className="form-label">Address</label>
-                  <textarea id="address" className="form-control" rows={3}></textarea>
-                </div>
-                </div>
-                <div className="d-flex gap-2">
-                  <button type="submit" className="btn btn-primary">Add Patient</button>
-                  <button type="reset" className="btn btn-secondary">Clear</button>
-                </div>
-              </form>
+              <PatientForm
+                data={patient}
+                setData={setPatient}
+                error={error}
+                onSubmit={handleSubmit}
+                submitText="Add Patient"
+                onClear={handleClear}
+              />
             </div>
           </div>
         </div>
       </div>
+
+      <ConfirmModal
+        show={showConfirm}
+        title="Add Patient"
+        confirmText="Add Patient"
+        confirmVariant="primary"
+        onConfirm={confirmAdd}
+        onClose={() => setShowConfirm(false)}
+      >
+        Are you sure you want to add{" "}
+        <strong>{patient.name || "this patient"}</strong>?
+      </ConfirmModal>
     </>
   );
 }

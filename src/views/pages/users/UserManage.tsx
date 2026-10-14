@@ -2,25 +2,55 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router";
 import { defaultUser, type User } from "../../../interfaces/User";
 import { api } from "../../../api";
+import ConfirmModal from "../../../components/ConfirmModoal";
+
 
 function UserManage() {
   const [users, setUsers] = useState<User[]>([defaultUser]);
+  const [deleteTarget, setDeleteTarget] = useState<{
+    id: number;
+    name: string;
+  } | null>(null);
 
-  function getall(){
+  function getall() {
     api
-    .get("users")
-    .then(function(res){
-      // console.log(res.data.users);
-      setUsers(res.data.users);
-    })
-    .catch(function(err){
-      console.log(err);
-    })
+      .get("users")
+      .then(function (res) {
+        // console.log(res.data.users);
+        setUsers(res.data.users);
+      })
+      .catch(function (err) {
+        console.log(err);
+      });
   }
 
-  useEffect(()=>{
+  useEffect(() => {
     getall();
-  },[]);
+  }, []);
+
+  // delete button click korle shudhu modal khulbe
+  const handleDelete = (id: number, name: string) => {
+    setDeleteTarget({ id, name });
+  };
+
+  // modal-er "Delete" button e click korle asol delete hobe
+  const confirmDelete = () => {
+    if (!deleteTarget) return;
+
+    api
+      .delete(`users/${deleteTarget.id}`)
+      .then(function () {
+        // alert(res.data.message);
+        getall();
+      })
+      .catch(function (err) {
+        console.log(err);
+      })
+      .finally(function () {
+        setDeleteTarget(null);
+      });
+  };
+
   return (
     <>
       <div className="row">
@@ -73,26 +103,41 @@ function UserManage() {
                 </tr>
               </thead>
               <tbody>
-                {users.map((item)=>(
+                {users.map((item) => (
+                  <tr className="align-middle" key={item.id}>
+                    <td>{item.name}</td>
+                    <td>{item.email}</td>
+                    <td>{item.phone}</td>
+                    <td>{item.role?.name}</td>
+                    <td>{item.active ? "active" : "inactive"}</td>
+                    <td className="text-end text-nowrap">
+                      <Link
+                        to={`/users/${item.id}`}
+                        title="Details"
+                        className="btn btn-sm btn-outline-primary me-1"
+                      >
+                        <i className="bi bi-eye"></i>
+                      </Link>
 
-                <tr className="align-middle">
-                  <td>{item.name}</td>
-                  <td>{item.email}</td>
-                  <td>{item.phone}</td>
-                  <td>{item.role?.name}</td>
-                  <td>{item.active ? 'active' : 'inactive'}</td>
-                  <td className="text-end text-nowrap">
-                    <Link to="/user-details/1" title="Details" className="btn btn-sm btn-outline-primary me-1"><i className="bi bi-eye"></i></Link>
+                      <Link
+                        to={`/users/${item.id}/edit`}
+                        title="Edit"
+                        className="btn btn-sm btn-outline-secondary me-1"
+                      >
+                        <i className="bi bi-pencil"></i>
+                      </Link>
 
-                    <Link to="/edit-user/1" title="Edit" className="btn btn-sm btn-outline-secondary me-1"><i className="bi bi-pencil"></i>
-
-                    </Link><button type="button" className="btn btn-sm btn-outline-danger" title="Delete"><i className="bi bi-trash"></i></button>
-                  </td>
-                </tr>
+                      <button
+                        type="button"
+                        onClick={() => handleDelete(item.id, item.name)}
+                        className="btn btn-sm btn-outline-danger"
+                        title="Delete"
+                      >
+                        <i className="bi bi-trash"></i>
+                      </button>
+                    </td>
+                  </tr>
                 ))}
-                
-               
-                
               </tbody>
               <tfoot>
                 <tr>
@@ -123,6 +168,17 @@ function UserManage() {
           </div>
         </div>
       </div>
+
+      <ConfirmModal
+        show={deleteTarget !== null}
+        title="Delete User"
+        confirmText="Delete"
+        confirmVariant="danger"
+        onConfirm={confirmDelete}
+        onClose={() => setDeleteTarget(null)}
+      >
+        Are you sure you want to delete <strong>{deleteTarget?.name}</strong>?
+      </ConfirmModal>
     </>
   );
 }

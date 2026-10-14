@@ -1,6 +1,25 @@
-import { Link } from "react-router";
+import { useEffect, useState } from "react";
+import { Link, useParams } from "react-router";
+import { defaultUser } from "../../../interfaces/User";
+import { api } from "../../../api";
 
 function UserDetails() {
+  const {id} = useParams();
+  const [user, setUser] = useState(defaultUser);  
+  const getItem = () => {
+    api
+      .get(`users/${id}`)
+      .then(function (res) {
+        // console.log(res.data.user);
+        setUser(res.data.user);
+      })
+      .catch(function (err) {
+        console.log(err);
+      });
+  };
+  useEffect(() => {
+    getItem();
+  }, []);
   return (
     <>
       <div className="row">
@@ -25,23 +44,23 @@ function UserDetails() {
               <div className="row">
                 <div className="col-md-6 mb-4">
                   <div className="text-muted small mb-1">Name</div>
-                  <div className="fw-medium">—</div>
+                  <div className="fw-medium">{user.name}</div>
                 </div>
                 <div className="col-md-6 mb-4">
                   <div className="text-muted small mb-1">Email</div>
-                  <div className="fw-medium">—</div>
+                  <div className="fw-medium">{user.email}</div>
                 </div>
                 <div className="col-md-6 mb-4">
                   <div className="text-muted small mb-1">Phone</div>
-                  <div className="fw-medium">—</div>
+                  <div className="fw-medium">{user.phone}</div>
                 </div>
                 <div className="col-md-6 mb-4">
                   <div className="text-muted small mb-1">Role</div>
-                  <div className="fw-medium">—</div>
+                  <div className="fw-medium">{user.role?.name}</div>
                 </div>
                 <div className="col-md-6 mb-4">
                   <div className="text-muted small mb-1">Status</div>
-                  <div className="fw-medium">—</div>
+                  <div className="fw-medium">{user.active? 'active' : 'inactive'}</div>
                 </div>
               </div>
             </div>
