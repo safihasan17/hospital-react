@@ -7,8 +7,8 @@ const groups: { title: string; items: Item[] }[] = [
     title: "Clinic",
     items: [
       { to: "/patients", label: "Patients", icon: "people" },
-      { to: "/doctors", label: "Doctors", icon: "person-vcard" },
       { to: "/departments", label: "Departments", icon: "diagram-3" },
+      { to: "/doctors", label: "Doctors", icon: "person-vcard" },
       { to: "/appointments", label: "Appointments", icon: "calendar-check" },
       { to: "/prescriptions", label: "Prescriptions", icon: "file-medical" },
       { to: "/lab-tests", label: "Lab Tests", icon: "eyedropper" },

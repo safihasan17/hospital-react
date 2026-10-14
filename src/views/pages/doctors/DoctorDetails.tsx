@@ -1,6 +1,37 @@
-import { Link } from "react-router";
+import { useEffect, useState } from "react";
+import { Link, useParams } from "react-router";
+import { api } from "../../../api";
+import {
+  defaultDoctor,
+  doctorImageUrl,
+  type Doctor,
+} from "../../../interfaces/Doctor";
 
 function DoctorDetails() {
+  const { id } = useParams();
+  const [doctor, setDoctor] = useState<Doctor>({ ...defaultDoctor });
+
+  useEffect(() => {
+    api
+      .get(`doctors/${id}`)
+      .then(function (res) {
+        setDoctor(res.data.doctor);
+      })
+      .catch(function (err) {
+        console.log(err);
+      });
+  }, [id]);
+
+  const fields: { label: string; value?: string | number | null }[] = [
+    { label: "Doctor", value: doctor.user?.name },
+    { label: "Email", value: doctor.user?.email },
+    { label: "Phone", value: doctor.user?.phone },
+    { label: "Department", value: doctor.department?.name },
+    { label: "Specialization", value: doctor.specialization },
+    { label: "Qualification", value: doctor.qualification },
+    { label: "Fee", value: doctor.consultation_fee },
+  ];
+
   return (
     <>
       <div className="row">
@@ -11,9 +42,22 @@ function DoctorDetails() {
               <p className="mb-0">Doctor details</p>
             </div>
             <div className="d-flex gap-2 no-print">
-              <Link to="/edit-doctor/1" className="btn btn-outline-primary"><i className="bi bi-pencil"></i> Edit</Link>
-              <button type="button" className="btn btn-outline-secondary" onClick={() => window.print()}><i className="bi bi-printer"></i> Print</button>
-              <Link to="/doctors" className="btn btn-primary">Go to Doctors List</Link>
+              <Link
+                to={`/edit-doctor/${id}`}
+                className="btn btn-outline-primary"
+              >
+                <i className="bi bi-pencil"></i> Edit
+              </Link>
+              <button
+                type="button"
+                className="btn btn-outline-secondary"
+                onClick={() => window.print()}
+              >
+                <i className="bi bi-printer"></i> Print
+              </button>
+              <Link to="/doctors" className="btn btn-primary">
+                Go to Doctors List
+              </Link>
             </div>
           </div>
         </div>
@@ -22,27 +66,21 @@ function DoctorDetails() {
         <div className="col-12">
           <div className="card">
             <div className="card-body p-4">
+              {typeof doctor.image === "string" && doctor.image && (
+                <img
+                  src={doctorImageUrl(doctor.image)}
+                  alt=""
+                  className="rounded border mb-4"
+                  style={{ height: 120 }}
+                />
+              )}
               <div className="row">
-                <div className="col-md-6 mb-4">
-                  <div className="text-muted small mb-1">Doctor</div>
-                  <div className="fw-medium">—</div>
-                </div>
-                <div className="col-md-6 mb-4">
-                  <div className="text-muted small mb-1">Department</div>
-                  <div className="fw-medium">—</div>
-                </div>
-                <div className="col-md-6 mb-4">
-                  <div className="text-muted small mb-1">Specialization</div>
-                  <div className="fw-medium">—</div>
-                </div>
-                <div className="col-md-6 mb-4">
-                  <div className="text-muted small mb-1">Qualification</div>
-                  <div className="fw-medium">—</div>
-                </div>
-                <div className="col-md-6 mb-4">
-                  <div className="text-muted small mb-1">Fee</div>
-                  <div className="fw-medium">—</div>
-                </div>
+                {fields.map((f) => (
+                  <div className="col-md-6 mb-4" key={f.label}>
+                    <div className="text-muted small mb-1">{f.label}</div>
+                    <div className="fw-medium">{f.value || "—"}</div>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
