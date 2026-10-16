@@ -1,6 +1,77 @@
-import { Link } from "react-router";
+import { useEffect, useState, type FormEvent } from "react";
+import { Link, useNavigate, useParams } from "react-router";
+import { api } from "../../../api";
+import {
+  appointmentToPayload,
+  defaultAppointment,
+  errorAppointment,
+  formatTime,
+  type Appointment,
+} from "../../../interfaces/Appointment";
+import { useAppointmentOptions } from "../../../hooks/UseAppointmentOptions";
+import ConfirmModal from "../../../components/ConfirmModoal";
+import AppointmentForm from "../../../components/AppointmentForm";
 
 function AppointmentEdit() {
+  const { id } = useParams();
+  const { patients, doctors } = useAppointmentOptions();
+  const [appointment, setAppointment] = useState<Appointment>({
+    ...defaultAppointment,
+  });
+  const [error, setError] = useState(errorAppointment);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const navigate = useNavigate();
+
+  const getItem = () => {
+    api
+      .get(`appointments/${id}`)
+      .then(function (res) {
+        const a = res.data.appointment;
+        // DB-r null value gulo form-er jonno "" kore nei, time "09:30:00" -> "09:30"
+        setAppointment({
+          ...defaultAppointment,
+          ...a,
+          appointment_time: formatTime(a.appointment_time),
+          reason: a.reason ?? "",
+        });
+      })
+      .catch(function (err) {
+        console.log(err);
+      });
+  };
+
+  useEffect(() => {
+    getItem();
+  }, []);
+
+  const handleSubmit = (e: FormEvent) => {
+    e.preventDefault();
+    setShowConfirm(true);
+  };
+
+  // modal-er "Update" button e click korle asol API call hobe.
+  // File nei, tai shoja PUT.
+  const confirmUpdate = () => {
+    api
+      .put(`appointments/${id}`, appointmentToPayload(appointment))
+      .then(function (res) {
+        if (res.data.success) {
+          setShowConfirm(false);
+          setError(errorAppointment);
+          navigate("/appointments");
+        }
+      })
+      .catch(function (err) {
+        console.log(err.response?.data);
+        if (err.response?.status === 422) {
+          setError(err.response.data.errors);
+        }
+      })
+      .finally(function () {
+        setShowConfirm(false);
+      });
+  };
+
   return (
     <>
       <div className="row">
@@ -11,7 +82,9 @@ function AppointmentEdit() {
               <p className="mb-0">Update this appointment</p>
             </div>
             <div className="d-flex gap-2">
-              <Link to="/appointments" className="btn btn-primary">Go to Appointments List</Link>
+              <Link to="/appointments" className="btn btn-primary">
+                Go to Appointments List
+              </Link>
             </div>
           </div>
         </div>
@@ -20,50 +93,31 @@ function AppointmentEdit() {
         <div className="col-12">
           <div className="card">
             <div className="card-body p-4">
-              {/* Add your own submit logic here (useState / API call) */}
-              <form onSubmit={(e) => e.preventDefault()}>
-                <div className="row">
-                <div className="col-md-6 mb-3">
-                  <label htmlFor="patient_id" className="form-label">Patient <span className="text-danger">*</span></label>
-                  <select id="patient_id" className="form-select" required>
-                    <option value="">Select…</option>
-                  </select>
-                </div>
-                <div className="col-md-6 mb-3">
-                  <label htmlFor="doctor_id" className="form-label">Doctor <span className="text-danger">*</span></label>
-                  <select id="doctor_id" className="form-select" required>
-                    <option value="">Select…</option>
-                  </select>
-                </div>
-                <div className="col-md-6 mb-3">
-                  <label htmlFor="appointment_date" className="form-label">Date <span className="text-danger">*</span></label>
-                  <input id="appointment_date" type="date" className="form-control" required />
-                </div>
-                <div className="col-md-6 mb-3">
-                  <label htmlFor="appointment_time" className="form-label">Time <span className="text-danger">*</span></label>
-                  <input id="appointment_time" type="time" className="form-control" required />
-                </div>
-                <div className="col-md-6 mb-3">
-                  <label htmlFor="status" className="form-label">Status <span className="text-danger">*</span></label>
-                  <select id="status" className="form-select" required>
-                    <option value="">Select…</option>
-                    <option value="Scheduled">Scheduled</option><option value="Checked-in">Checked-in</option><option value="Waiting">Waiting</option><option value="Completed">Completed</option><option value="Cancelled">Cancelled</option>
-                  </select>
-                </div>
-                <div className="col-12 mb-3">
-                  <label htmlFor="reason" className="form-label">Reason for visit</label>
-                  <textarea id="reason" className="form-control" rows={3}></textarea>
-                </div>
-                </div>
-                <div className="d-flex gap-2">
-                  <button type="submit" className="btn btn-primary">Save changes</button>
-                  <button type="reset" className="btn btn-secondary">Clear</button>
-                </div>
-              </form>
+              <AppointmentForm
+                data={appointment}
+                setData={setAppointment}
+                patients={patients}
+                doctors={doctors}
+                error={error}
+                onSubmit={handleSubmit}
+                submitText="Save changes"
+              />
             </div>
           </div>
         </div>
       </div>
+
+      <ConfirmModal
+        show={showConfirm}
+        title="Update Appointment"
+        confirmText="Update"
+        confirmVariant="primary"
+        onConfirm={confirmUpdate}
+        onClose={() => setShowConfirm(false)}
+      >
+        Are you sure you want to update the appointment of{" "}
+        <strong>{appointment.patient?.name ?? "this patient"}</strong>?
+      </ConfirmModal>
     </>
   );
 }

@@ -12,6 +12,7 @@ interface FormSelectProps {
   placeholder?: string;
   required?: boolean;
   col?: string;
+  disabled?: boolean;
 }
 
 function FormSelect({
@@ -21,6 +22,7 @@ function FormSelect({
   placeholder = `Select ${label}`,
   required = true,
   col = "col-md-6",
+  disabled = false,
 }: FormSelectProps) {
   const { data, setData, error } = useFormContext();
 
@@ -39,6 +41,7 @@ function FormSelect({
         id={name}
         className="form-select"
         required={required}
+        disabled={disabled}
         value={String(data[name] ?? "") === "0" ? "" : String(data[name] ?? "")}
         onChange={(e) => handleChange(e.target.value)}
       >
