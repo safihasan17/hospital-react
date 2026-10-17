@@ -1,6 +1,68 @@
-import { Link } from "react-router";
+import { useEffect, useState, type FormEvent } from "react";
+import { Link, useNavigate, useParams } from "react-router";
+import { api } from "../../../../api";
+import {
+  wardToPayload,
+  defaultWard,
+  errorWard,
+  type Ward,
+} from "../../../../interfaces/Ward";
+import { useWardOptions } from "../../../../hooks/UseWardOptions";
+import ConfirmModal from "../../../../components/ConfirmModoal";
+import WardForm from "../../../../components/WardForm";
 
 function WardEdit() {
+  const { id } = useParams();
+  const options = useWardOptions();
+  const [item, setItem] = useState<Ward>({ ...defaultWard });
+  const [error, setError] = useState(errorWard);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const navigate = useNavigate();
+
+  const getItem = () => {
+    api
+      .get(`wards/${id}`)
+      .then(function (res) {
+        const x = res.data.ward;
+        // DB-r null value gulo form-er jonno "" kore nei
+        setItem({ ...defaultWard, ...x });
+      })
+      .catch(function (err) {
+        console.log(err);
+      });
+  };
+
+  useEffect(() => {
+    getItem();
+  }, []);
+
+  const handleSubmit = (e: FormEvent) => {
+    e.preventDefault();
+    setShowConfirm(true);
+  };
+
+  // modal-er "Update" button e click korle asol API call hobe
+  const confirmUpdate = () => {
+    api
+      .put(`wards/${id}`, wardToPayload(item))
+      .then(function (res) {
+        if (res.data.success) {
+          setShowConfirm(false);
+          setError(errorWard);
+          navigate("/wards");
+        }
+      })
+      .catch(function (err) {
+        console.log(err.response?.data);
+        if (err.response?.status === 422) {
+          setError(err.response.data.errors);
+        }
+      })
+      .finally(function () {
+        setShowConfirm(false);
+      });
+  };
+
   return (
     <>
       <div className="row">
@@ -11,7 +73,9 @@ function WardEdit() {
               <p className="mb-0">Update this ward</p>
             </div>
             <div className="d-flex gap-2">
-              <Link to="/wards" className="btn btn-primary">Go to Wards List</Link>
+              <Link to="/wards" className="btn btn-primary">
+                Go to Wards List
+              </Link>
             </div>
           </div>
         </div>
@@ -20,31 +84,29 @@ function WardEdit() {
         <div className="col-12">
           <div className="card">
             <div className="card-body p-4">
-              {/* Add your own submit logic here (useState / API call) */}
-              <form onSubmit={(e) => e.preventDefault()}>
-                <div className="row">
-                <div className="col-md-6 mb-3">
-                  <label htmlFor="name" className="form-label">Ward name <span className="text-danger">*</span></label>
-                  <input id="name" type="text" className="form-control" required />
-                </div>
-                <div className="col-md-6 mb-3">
-                  <label htmlFor="floor" className="form-label">Floor <span className="text-danger">*</span></label>
-                  <input id="floor" type="text" className="form-control" required />
-                </div>
-                <div className="col-md-6 mb-3">
-                  <label htmlFor="type" className="form-label">Type <span className="text-danger">*</span></label>
-                  <input id="type" type="text" className="form-control" required />
-                </div>
-                </div>
-                <div className="d-flex gap-2">
-                  <button type="submit" className="btn btn-primary">Save changes</button>
-                  <button type="reset" className="btn btn-secondary">Clear</button>
-                </div>
-              </form>
+              <WardForm
+                data={item}
+                setData={setItem}
+                options={options}
+                error={error}
+                onSubmit={handleSubmit}
+                submitText="Save changes"
+              />
             </div>
           </div>
         </div>
       </div>
+
+      <ConfirmModal
+        show={showConfirm}
+        title="Update Ward"
+        confirmText="Update"
+        confirmVariant="primary"
+        onConfirm={confirmUpdate}
+        onClose={() => setShowConfirm(false)}
+      >
+        Are you sure you want to update this ward?
+      </ConfirmModal>
     </>
   );
 }

@@ -7,6 +7,8 @@ interface FormInputProps {
   required?: boolean; // shudhu * chinho dekhay
   col?: string; // grid column class, default half width
   placeholder?: string;
+  step?: string; // number input-e decimal-er jonno, jemon "0.01"
+  min?: string;
 }
 
 function FormInput({
@@ -16,6 +18,8 @@ function FormInput({
   required = true,
   col = "col-md-6",
   placeholder,
+  step,
+  min,
 }: FormInputProps) {
   const { data, setData, error } = useFormContext();
 
@@ -29,6 +33,8 @@ function FormInput({
         type={type}
         className="form-control"
         placeholder={placeholder}
+        step={step}
+        min={min}
         value={String(data[name] ?? "")}
         onChange={(e) => setData({ ...data, [name]: e.target.value })}
       />

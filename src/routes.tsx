@@ -20,6 +20,12 @@ import AppointmentEdit from "./views/pages/appointments/AppointmentEdit.tsx";
 import AppointmentDetails from "./views/pages/appointments/AppointmentDetails.tsx";
 import LabTestManage from "./views/pages/labtests/LabTestManage.tsx";
 import LabTestDetails from "./views/pages/labtests/LabTestDetails.tsx";
+import LabTestAdd from "./views/pages/labtests/LabTestAdd.tsx";
+import LabTestEdit from "./views/pages/labtests/LabTestEdit.tsx";
+import PrescriptionMedicineManage from "./views/pages/prescriptions/PrescriptionMedicineManage.tsx";
+import PrescriptionMedicineAdd from "./views/pages/prescriptions/PrescriptionMedicineAdd.tsx";
+import PrescriptionMedicineEdit from "./views/pages/prescriptions/PrescriptionMedicineEdit.tsx";
+import PrescriptionMedicineDetails from "./views/pages/prescriptions/PrescriptionMedicineDetails.tsx";
 import WardManage from "./views/pages/inpatient/wards/WardManage.tsx";
 import WardAdd from "./views/pages/inpatient/wards/WardAdd.tsx";
 import WardEdit from "./views/pages/inpatient/wards/WardEdit.tsx";
@@ -99,6 +105,8 @@ export const routes = createBrowserRouter([
 
       // LabTest
       { path:"/lab-tests", element:<LabTestManage/> },
+      { path:"/add-lab-test", element:<LabTestAdd/> },
+      { path:"/edit-lab-test/:id", element:<LabTestEdit/> },
       { path:"/lab-test-details/:id", element:<LabTestDetails/> },
 
       // Ward
@@ -124,6 +132,10 @@ export const routes = createBrowserRouter([
       { path:"/add-prescription", element:<PrescriptionAdd/> },
       { path:"/edit-prescription/:id", element:<PrescriptionEdit/> },
       { path:"/prescription-details/:id", element:<PrescriptionDetails/> },
+      { path:"/prescription-medicines", element:<PrescriptionMedicineManage/> },
+      { path:"/add-prescription-medicine", element:<PrescriptionMedicineAdd/> },
+      { path:"/edit-prescription-medicine/:id", element:<PrescriptionMedicineEdit/> },
+      { path:"/prescription-medicine-details/:id", element:<PrescriptionMedicineDetails/> },
 
       // LabOrder
       { path:"/lab-orders", element:<LabOrderManage/> },

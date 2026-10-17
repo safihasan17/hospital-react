@@ -11,6 +11,7 @@ const groups: { title: string; items: Item[] }[] = [
       { to: "/doctors", label: "Doctors", icon: "person-vcard" },
       { to: "/appointments", label: "Appointments", icon: "calendar-check" },
       { to: "/prescriptions", label: "Prescriptions", icon: "file-medical" },
+      { to: "/prescription-medicines", label: "Rx Medicines", icon: "card-list" },
       { to: "/lab-tests", label: "Lab Tests", icon: "eyedropper" },
       { to: "/lab-orders", label: "Lab Orders", icon: "clipboard2-pulse" },
     ],

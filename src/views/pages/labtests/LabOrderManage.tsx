@@ -1,8 +1,100 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router";
+import { api } from "../../../api";
+import {
+  labOrderStatuses,
+  labStatusBadgeClass,
+  type LabOrder,
+} from "../../../interfaces/LabOrder";
+import { onlyDate } from "../../../utils/format";
+import ConfirmModal from "../../../components/ConfirmModoal";
 
 function LabOrderManage() {
+  const [orders, setOrders] = useState<LabOrder[]>([]);
+  const [stats, setStats] = useState({
+    pending: 0,
+    inProgress: 0,
+    completed: 0,
+    cancelled: 0,
+  });
+  const [search, setSearch] = useState("");
+  const [status, setStatus] = useState("");
+  const [message, setMessage] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{
+    id: number;
+    name: string;
+  } | null>(null);
+
+  function getall() {
+    api
+      .get("lab-test-orders")
+      .then(function (res) {
+        setOrders(res.data.labTestOrders);
+        setStats({
+          pending: res.data.pendingCount,
+          inProgress: res.data.inProgressCount,
+          completed: res.data.completedCount,
+          cancelled: res.data.cancelledCount,
+        });
+      })
+      .catch(function (err) {
+        console.log(err);
+      });
+  }
+
+  useEffect(() => {
+    getall();
+  }, []);
+
+  const confirmDelete = () => {
+    if (!deleteTarget) return;
+
+    api
+      .delete(`lab-test-orders/${deleteTarget.id}`)
+      .then(function () {
+        getall();
+      })
+      .catch(function (err) {
+        console.log(err);
+        setMessage(err.response?.data?.message ?? "Failed to delete lab order");
+      })
+      .finally(function () {
+        setDeleteTarget(null);
+      });
+  };
+
+  // search: patient, doctor ba test-er nam; status dropdown (list-er upor)
+  const q = search.trim().toLowerCase();
+  const visible = orders.filter((o) => {
+    if (status && o.status !== status) return false;
+    if (!q) return true;
+    return (
+      (o.patient?.name ?? "").toLowerCase().includes(q) ||
+      (o.doctor?.user?.name ?? "").toLowerCase().includes(q) ||
+      (o.test?.test_name ?? "").toLowerCase().includes(q)
+    );
+  });
+
+  const statCards = [
+    { label: "Pending", value: stats.pending },
+    { label: "In Progress", value: stats.inProgress },
+    { label: "Completed", value: stats.completed },
+    { label: "Cancelled", value: stats.cancelled },
+  ];
+
   return (
     <>
+      {message && (
+        <div className="alert alert-danger alert-dismissible" role="alert">
+          {message}
+          <button
+            type="button"
+            className="btn-close"
+            aria-label="Close"
+            onClick={() => setMessage(null)}
+          ></button>
+        </div>
+      )}
       <div className="row">
         <div className="col-12">
           <div className="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
@@ -11,18 +103,64 @@ function LabOrderManage() {
               <p className="mb-0">Lab tests ordered for patients, with results</p>
             </div>
             <div>
-              <Link to="/add-lab-order" className="btn btn-primary"><i className="bi bi-plus-lg"></i> Add Lab Order</Link>
+              <Link to="/add-lab-order" className="btn btn-primary">
+                <i className="bi bi-plus-lg"></i> Add Lab Order
+              </Link>
             </div>
           </div>
         </div>
       </div>
+
+      <div className="row">
+        {statCards.map((s) => (
+          <div className="col-6 col-md-3 mb-3" key={s.label}>
+            <div className="card">
+              <div className="card-body">
+                <div className="text-muted small">{s.label}</div>
+                <div className="fs-4 fw-semibold">{s.value}</div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
       <div className="row">
         <div className="col-12">
           <div className="d-flex gap-2 mb-3 flex-wrap justify-content-between">
-            <input type="text" className="form-control" placeholder="Search lab orders..." style={{ maxWidth: "250px" }} />
             <div className="d-flex gap-2">
-              <button type="button" className="btn btn-outline-secondary"><i className="bi bi-file-earmark-excel"></i> Excel</button>
-              <button type="button" className="btn btn-outline-secondary" onClick={() => window.print()}><i className="bi bi-file-earmark-pdf"></i> PDF</button>
+              <input
+                type="text"
+                className="form-control"
+                placeholder="Search patient, doctor or test..."
+                style={{ maxWidth: "250px" }}
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+              <select
+                className="form-select"
+                style={{ maxWidth: "180px" }}
+                value={status}
+                onChange={(e) => setStatus(e.target.value)}
+              >
+                <option value="">All status</option>
+                {labOrderStatuses.map((s) => (
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="d-flex gap-2">
+              <button type="button" className="btn btn-outline-secondary">
+                <i className="bi bi-file-earmark-excel"></i> Excel
+              </button>
+              <button
+                type="button"
+                className="btn btn-outline-secondary"
+                onClick={() => window.print()}
+              >
+                <i className="bi bi-file-earmark-pdf"></i> PDF
+              </button>
             </div>
           </div>
           <div className="card table-responsive">
@@ -39,29 +177,94 @@ function LabOrderManage() {
                 </tr>
               </thead>
               <tbody>
-                {/* Example row — replace with your own data, e.g. rows.map((r) => ( ... )) */}
-                {/*
-                <tr className="align-middle">
-                  <td>Date</td>
-                  <td>Patient</td>
-                  <td>Doctor</td>
-                  <td>Test</td>
-                  <td>Status</td>
-                  <td>Result</td>
-                  <td className="text-end text-nowrap"><Link to="/lab-order-details/1" title="Details" className="btn btn-sm btn-outline-primary me-1"><i className="bi bi-eye"></i></Link><Link to="/edit-lab-order/1" title="Edit" className="btn btn-sm btn-outline-secondary me-1"><i className="bi bi-pencil"></i></Link><button type="button" className="btn btn-sm btn-outline-danger" title="Delete"><i className="bi bi-trash"></i></button></td>
-                </tr>
-                */}
-                <tr><td colSpan={7} className="text-center text-muted py-4">No data yet.</td></tr>
+                {visible.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="text-center text-muted py-4">
+                      No data yet.
+                    </td>
+                  </tr>
+                ) : (
+                  visible.map((item) => {
+                    const patientName =
+                      item.patient?.name ?? `Patient #${item.patient_id}`;
+                    const testName =
+                      item.test?.test_name ?? `Test #${item.test_id}`;
+                    return (
+                      <tr className="align-middle" key={item.id}>
+                        <td>{onlyDate(item.order_date)}</td>
+                        <td>{patientName}</td>
+                        <td>
+                          {item.doctor?.user?.name ?? `Doctor #${item.doctor_id}`}
+                        </td>
+                        <td>{testName}</td>
+                        <td>
+                          <span
+                            className={`badge ${labStatusBadgeClass(item.status)}`}
+                          >
+                            {item.status}
+                          </span>
+                        </td>
+                        <td
+                          className="text-truncate"
+                          style={{ maxWidth: "220px" }}
+                        >
+                          {item.result || "—"}
+                        </td>
+                        <td className="text-end text-nowrap">
+                          <Link
+                            to={`/lab-order-details/${item.id}`}
+                            title="Details"
+                            className="btn btn-sm btn-outline-primary me-1"
+                          >
+                            <i className="bi bi-eye"></i>
+                          </Link>
+                          <Link
+                            to={`/edit-lab-order/${item.id}`}
+                            title="Edit"
+                            className="btn btn-sm btn-outline-secondary me-1"
+                          >
+                            <i className="bi bi-pencil"></i>
+                          </Link>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setDeleteTarget({
+                                id: item.id,
+                                name: `${testName} — ${patientName}`,
+                              })
+                            }
+                            className="btn btn-sm btn-outline-danger"
+                            title="Delete"
+                          >
+                            <i className="bi bi-trash"></i>
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
               </tbody>
               <tfoot>
                 <tr>
-                  <td className="border-bottom-0" colSpan={2}>Showing 0–0 of 0</td>
+                  <td className="border-bottom-0" colSpan={2}>
+                    Showing {visible.length ? `1–${visible.length}` : "0–0"} of{" "}
+                    {orders.length}
+                  </td>
                   <td colSpan={5} className="border-bottom-0">
-                    <nav aria-label="Page navigation" className="d-flex justify-content-end">
+                    <nav
+                      aria-label="Page navigation"
+                      className="d-flex justify-content-end"
+                    >
                       <ul className="pagination mb-0">
-                        <li className="page-item disabled"><button className="page-link">Previous</button></li>
-                        <li className="page-item active"><button className="page-link">1</button></li>
-                        <li className="page-item disabled"><button className="page-link">Next</button></li>
+                        <li className="page-item disabled">
+                          <button className="page-link">Previous</button>
+                        </li>
+                        <li className="page-item active">
+                          <button className="page-link">1</button>
+                        </li>
+                        <li className="page-item disabled">
+                          <button className="page-link">Next</button>
+                        </li>
                       </ul>
                     </nav>
                   </td>
@@ -71,6 +274,18 @@ function LabOrderManage() {
           </div>
         </div>
       </div>
+
+      <ConfirmModal
+        show={deleteTarget !== null}
+        title="Delete Lab Order"
+        confirmText="Delete"
+        confirmVariant="danger"
+        onConfirm={confirmDelete}
+        onClose={() => setDeleteTarget(null)}
+      >
+        Are you sure you want to delete the lab order{" "}
+        <strong>{deleteTarget?.name}</strong>?
+      </ConfirmModal>
     </>
   );
 }

@@ -30,6 +30,8 @@ export interface Prescription {
     department?: { id: number; name: string } | null;
   };
   appointment?: { id: number; appointment_date: string } | null;
+  // already admit hole (admissions.prescription_id) -- backend index-e load korte hobe
+  admission?: { id: number; status: string } | null;
   prescription_medicines?: {
     id: number;
     medicine_id: number;

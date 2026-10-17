@@ -3,6 +3,7 @@ import { Link } from "react-router";
 import { api } from "../../../api";
 import type { Prescription } from "../../../interfaces/Prescription";
 import ConfirmModal from "../../../components/ConfirmModoal";
+import { admissionStatusBadgeClass } from "../../../interfaces/Admission";
 
 // "2026-10-16T00:00:00.000000Z" -> "2026-10-16"
 const onlyDate = (value?: string | null) => (value ?? "").split("T")[0];
@@ -137,7 +138,7 @@ function PrescriptionManage() {
                   <th>Doctor</th>
                   <th>Medicines</th>
                   <th>Lab tests</th>
-                  <th>Admission advised</th>
+                  <th>Admission</th>
                   <th className="text-end">Action</th>
                 </tr>
               </thead>
@@ -162,10 +163,30 @@ function PrescriptionManage() {
                         <td>{item.prescription_medicines_count ?? 0}</td>
                         <td>{item.lab_test_orders_count ?? 0}</td>
                         <td>
-                          {item.admission_advised ? (
-                            <span className="badge bg-warning text-dark">Yes</span>
+                          {item.admission ? (
+                            // already admit kora -- status dekhai
+                            <Link
+                              to={`/admission-details/${item.admission.id}`}
+                              className={`badge text-decoration-none ${admissionStatusBadgeClass(item.admission.status)}`}
+                            >
+                              {item.admission.status}
+                            </Link>
+                          ) : item.admission_advised ? (
+                            // doctor admission suggest korse, ekhono admit hoy ni
+                            <span className="d-inline-flex align-items-center gap-2">
+                              <span className="badge bg-warning text-dark">
+                                Admission advised
+                              </span>
+                              <Link
+                                to={`/add-admission?prescription_id=${item.id}`}
+                                className="btn btn-sm btn-outline-primary py-0"
+                                title="Admit this patient"
+                              >
+                                Admit
+                              </Link>
+                            </span>
                           ) : (
-                            <span className="badge bg-secondary">No</span>
+                            <span className="text-muted">—</span>
                           )}
                         </td>
                         <td className="text-end text-nowrap">

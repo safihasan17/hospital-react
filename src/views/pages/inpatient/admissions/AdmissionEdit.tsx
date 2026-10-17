@@ -1,6 +1,75 @@
-import { Link } from "react-router";
+import { useEffect, useState, type FormEvent } from "react";
+import { Link, useNavigate, useParams } from "react-router";
+import { api } from "../../../../api";
+import {
+  admissionToUpdatePayload,
+  emptyAdmission,
+  errorAdmission,
+  type Admission,
+} from "../../../../interfaces/Admission";
+import { useAdmissionOptions } from "../../../../hooks/UseAdmissionOptions";
+import { toInputDateTime } from "../../../../utils/format";
+import ConfirmModal from "../../../../components/ConfirmModoal";
+import AdmissionForm from "../../../../components/AdmissionForm";
 
 function AdmissionEdit() {
+  const { id } = useParams();
+  // admission_id dile ager bed-o bed list-e thake
+  const { options } = useAdmissionOptions({ admission_id: id });
+  const [admission, setAdmission] = useState<Admission>(emptyAdmission());
+  const [error, setError] = useState(errorAdmission);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const navigate = useNavigate();
+
+  const getItem = () => {
+    api
+      .get(`admissions/${id}`)
+      .then(function (res) {
+        const x = res.data.admission;
+        // DB-r null value gulo form-er jonno "" kore nei, date -> datetime-local format
+        setAdmission({
+          ...emptyAdmission(),
+          ...x,
+          admission_date: toInputDateTime(x.admission_date),
+          discharge_date: toInputDateTime(x.discharge_date),
+        });
+      })
+      .catch(function (err) {
+        console.log(err);
+      });
+  };
+
+  useEffect(() => {
+    getItem();
+  }, []);
+
+  const handleSubmit = (e: FormEvent) => {
+    e.preventDefault();
+    setShowConfirm(true);
+  };
+
+  // modal-er "Update" button e click korle asol API call hobe
+  const confirmUpdate = () => {
+    api
+      .put(`admissions/${id}`, admissionToUpdatePayload(admission))
+      .then(function (res) {
+        if (res.data.success) {
+          setShowConfirm(false);
+          setError(errorAdmission);
+          navigate("/admissions");
+        }
+      })
+      .catch(function (err) {
+        console.log(err.response?.data);
+        if (err.response?.status === 422) {
+          setError(err.response.data.errors);
+        }
+      })
+      .finally(function () {
+        setShowConfirm(false);
+      });
+  };
+
   return (
     <>
       <div className="row">
@@ -11,7 +80,9 @@ function AdmissionEdit() {
               <p className="mb-0">Update this admission</p>
             </div>
             <div className="d-flex gap-2">
-              <Link to="/admissions" className="btn btn-primary">Go to Admissions List</Link>
+              <Link to="/admissions" className="btn btn-primary">
+                Go to Admissions List
+              </Link>
             </div>
           </div>
         </div>
@@ -20,58 +91,30 @@ function AdmissionEdit() {
         <div className="col-12">
           <div className="card">
             <div className="card-body p-4">
-              {/* Add your own submit logic here (useState / API call) */}
-              <form onSubmit={(e) => e.preventDefault()}>
-                <div className="row">
-                <div className="col-md-6 mb-3">
-                  <label htmlFor="patient_id" className="form-label">Patient <span className="text-danger">*</span></label>
-                  <select id="patient_id" className="form-select" required>
-                    <option value="">Select…</option>
-                  </select>
-                </div>
-                <div className="col-md-6 mb-3">
-                  <label htmlFor="doctor_id" className="form-label">Doctor <span className="text-danger">*</span></label>
-                  <select id="doctor_id" className="form-select" required>
-                    <option value="">Select…</option>
-                  </select>
-                </div>
-                <div className="col-md-6 mb-3">
-                  <label htmlFor="ward_id" className="form-label">Ward <span className="text-danger">*</span></label>
-                  <select id="ward_id" className="form-select" required>
-                    <option value="">Select…</option>
-                  </select>
-                </div>
-                <div className="col-md-6 mb-3">
-                  <label htmlFor="bed_id" className="form-label">Bed <span className="text-danger">*</span></label>
-                  <select id="bed_id" className="form-select" required>
-                    <option value="">Select…</option>
-                  </select>
-                </div>
-                <div className="col-md-6 mb-3">
-                  <label htmlFor="admission_date" className="form-label">Admission date & time <span className="text-danger">*</span></label>
-                  <input id="admission_date" type="datetime-local" className="form-control" required />
-                </div>
-                <div className="col-md-6 mb-3">
-                  <label htmlFor="discharge_date" className="form-label">Discharge date & time</label>
-                  <input id="discharge_date" type="datetime-local" className="form-control" />
-                </div>
-                <div className="col-md-6 mb-3">
-                  <label htmlFor="status" className="form-label">Status <span className="text-danger">*</span></label>
-                  <select id="status" className="form-select" required>
-                    <option value="">Select…</option>
-                    <option value="Admitted">Admitted</option><option value="Discharged">Discharged</option><option value="Transferred">Transferred</option>
-                  </select>
-                </div>
-                </div>
-                <div className="d-flex gap-2">
-                  <button type="submit" className="btn btn-primary">Save changes</button>
-                  <button type="reset" className="btn btn-secondary">Clear</button>
-                </div>
-              </form>
+              <AdmissionForm
+                data={admission}
+                setData={setAdmission}
+                options={options}
+                error={error}
+                onSubmit={handleSubmit}
+                submitText="Save changes"
+              />
             </div>
           </div>
         </div>
       </div>
+
+      <ConfirmModal
+        show={showConfirm}
+        title="Update Admission"
+        confirmText="Update"
+        confirmVariant="primary"
+        onConfirm={confirmUpdate}
+        onClose={() => setShowConfirm(false)}
+      >
+        Are you sure you want to update the admission of{" "}
+        <strong>{admission.patient?.name ?? "this patient"}</strong>?
+      </ConfirmModal>
     </>
   );
 }

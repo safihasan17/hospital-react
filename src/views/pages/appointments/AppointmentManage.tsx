@@ -111,7 +111,7 @@ function AppointmentManage() {
       <div className="row">
         <div className="col-12">
           <div className="d-flex gap-2 mb-3 flex-wrap justify-content-between">
-            <div className="d-flex gap-2 flex-wrap">
+            <div className="d-flex gap-2 ">
               <input
                 type="text"
                 className="form-control"

@@ -1,0 +1,261 @@
+import { useCallback, useEffect, useState } from "react";
+import { Link } from "react-router";
+import { api } from "../../../api";
+import type { PrescriptionMedicine } from "../../../interfaces/PrescriptionMedicine";
+import { usePrescriptionMedicineOptions } from "../../../hooks/UsePrescriptionMedicineOptions";
+import { onlyDate } from "../../../utils/format";
+import ConfirmModal from "../../../components/ConfirmModoal";
+
+function PrescriptionMedicineManage() {
+  const { prescriptions } = usePrescriptionMedicineOptions();
+  const [rows, setRows] = useState<PrescriptionMedicine[]>([]);
+  const [prescriptionId, setPrescriptionId] = useState("");
+  const [search, setSearch] = useState("");
+  const [message, setMessage] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{
+    id: number;
+    name: string;
+  } | null>(null);
+
+  const getall = useCallback(() => {
+    api
+      .get("prescription-medicines", {
+        params: { prescription_id: prescriptionId },
+      })
+      .then(function (res) {
+        setRows(res.data.prescriptionMedicines);
+      })
+      .catch(function (err) {
+        console.log(err);
+      });
+  }, [prescriptionId]);
+
+  useEffect(() => {
+    getall();
+  }, [getall]);
+
+  const prescriptionLabel = (pid: number | "") => {
+    const p = prescriptions.find((x) => x.id === pid);
+    return p
+      ? `#${p.id} — ${p.patient?.name ?? "Patient"} (${onlyDate(p.prescription_date)})`
+      : `#${pid}`;
+  };
+
+  const confirmDelete = () => {
+    if (!deleteTarget) return;
+
+    api
+      .delete(`prescription-medicines/${deleteTarget.id}`)
+      .then(function () {
+        getall();
+      })
+      .catch(function (err) {
+        console.log(err);
+        setMessage(
+          err.response?.data?.message ?? "Failed to delete prescription medicine",
+        );
+      })
+      .finally(function () {
+        setDeleteTarget(null);
+      });
+  };
+
+  const q = search.trim().toLowerCase();
+  const visible = rows.filter(
+    (r) => !q || (r.medicine?.name ?? "").toLowerCase().includes(q),
+  );
+
+  return (
+    <>
+      {message && (
+        <div className="alert alert-danger alert-dismissible" role="alert">
+          {message}
+          <button
+            type="button"
+            className="btn-close"
+            aria-label="Close"
+            onClick={() => setMessage(null)}
+          ></button>
+        </div>
+      )}
+      <div className="row">
+        <div className="col-12">
+          <div className="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
+            <div>
+              <h1 className="fs-3 mb-1">Prescription Medicines</h1>
+              <p className="mb-0">Medicine rows inside prescriptions</p>
+            </div>
+            <div>
+              <Link
+                to={
+                  prescriptionId
+                    ? `/add-prescription-medicine?prescription_id=${prescriptionId}`
+                    : "/add-prescription-medicine"
+                }
+                className="btn btn-primary"
+              >
+                <i className="bi bi-plus-lg"></i> Add Prescription Medicine
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="row">
+        <div className="col-12">
+          <div className="d-flex gap-2 mb-3 flex-wrap justify-content-between">
+            <div className="d-flex gap-2">
+              <input
+                type="text"
+                className="form-control"
+                placeholder="Search medicine..."
+                style={{ maxWidth: "250px" }}
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+              <select
+                className="form-select"
+                style={{ maxWidth: "320px" }}
+                value={prescriptionId}
+                onChange={(e) => setPrescriptionId(e.target.value)}
+              >
+                <option value="">All prescriptions</option>
+                {prescriptions.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {prescriptionLabel(p.id)}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="d-flex gap-2">
+              <button type="button" className="btn btn-outline-secondary">
+                <i className="bi bi-file-earmark-excel"></i> Excel
+              </button>
+              <button
+                type="button"
+                className="btn btn-outline-secondary"
+                onClick={() => window.print()}
+              >
+                <i className="bi bi-file-earmark-pdf"></i> PDF
+              </button>
+            </div>
+          </div>
+          <div className="card table-responsive">
+            <table className="table mb-0 text-nowrap table-hover">
+              <thead>
+                <tr>
+                  <th>Prescription</th>
+                  <th>Medicine</th>
+                  <th>Dosage</th>
+                  <th>Duration</th>
+                  <th>Instructions</th>
+                  <th className="text-end">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {visible.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="text-center text-muted py-4">
+                      No data yet.
+                    </td>
+                  </tr>
+                ) : (
+                  visible.map((item) => {
+                    const medName =
+                      item.medicine?.name ?? `Medicine #${item.medicine_id}`;
+                    return (
+                      <tr className="align-middle" key={item.id}>
+                        <td>
+                          <Link to={`/prescription-details/${item.prescription_id}`}>
+                            {prescriptionLabel(item.prescription_id)}
+                          </Link>
+                        </td>
+                        <td>{medName}</td>
+                        <td>{item.dosage || "—"}</td>
+                        <td>{item.duration || "—"}</td>
+                        <td
+                          className="text-truncate"
+                          style={{ maxWidth: "220px" }}
+                        >
+                          {item.instructions || "—"}
+                        </td>
+                        <td className="text-end text-nowrap">
+                          <Link
+                            to={`/prescription-medicine-details/${item.id}`}
+                            title="Details"
+                            className="btn btn-sm btn-outline-primary me-1"
+                          >
+                            <i className="bi bi-eye"></i>
+                          </Link>
+                          <Link
+                            to={`/edit-prescription-medicine/${item.id}`}
+                            title="Edit"
+                            className="btn btn-sm btn-outline-secondary me-1"
+                          >
+                            <i className="bi bi-pencil"></i>
+                          </Link>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setDeleteTarget({
+                                id: item.id,
+                                name: `${medName} (prescription #${item.prescription_id})`,
+                              })
+                            }
+                            className="btn btn-sm btn-outline-danger"
+                            title="Delete"
+                          >
+                            <i className="bi bi-trash"></i>
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+              <tfoot>
+                <tr>
+                  <td className="border-bottom-0" colSpan={2}>
+                    Showing {visible.length ? `1–${visible.length}` : "0–0"} of{" "}
+                    {rows.length}
+                  </td>
+                  <td colSpan={4} className="border-bottom-0">
+                    <nav
+                      aria-label="Page navigation"
+                      className="d-flex justify-content-end"
+                    >
+                      <ul className="pagination mb-0">
+                        <li className="page-item disabled">
+                          <button className="page-link">Previous</button>
+                        </li>
+                        <li className="page-item active">
+                          <button className="page-link">1</button>
+                        </li>
+                        <li className="page-item disabled">
+                          <button className="page-link">Next</button>
+                        </li>
+                      </ul>
+                    </nav>
+                  </td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <ConfirmModal
+        show={deleteTarget !== null}
+        title="Delete Prescription Medicine"
+        confirmText="Delete"
+        confirmVariant="danger"
+        onConfirm={confirmDelete}
+        onClose={() => setDeleteTarget(null)}
+      >
+        Are you sure you want to delete <strong>{deleteTarget?.name}</strong>?
+      </ConfirmModal>
+    </>
+  );
+}
+
+export default PrescriptionMedicineManage;
