@@ -3,12 +3,14 @@ import { Link } from "react-router";
 import { api } from "../../../api";
 import type { Prescription } from "../../../interfaces/Prescription";
 import ConfirmModal from "../../../components/ConfirmModoal";
+import Loader from "../../../components/Loader";
 import { admissionStatusBadgeClass } from "../../../interfaces/Admission";
 
 // "2026-10-16T00:00:00.000000Z" -> "2026-10-16"
 const onlyDate = (value?: string | null) => (value ?? "").split("T")[0];
 
 function PrescriptionManage() {
+  const [loading, setLoading] = useState(true);
   const [prescriptions, setPrescriptions] = useState<Prescription[]>([]);
   const [total, setTotal] = useState(0);
   const [issuedToday, setIssuedToday] = useState(0);
@@ -30,6 +32,9 @@ function PrescriptionManage() {
       })
       .catch(function (err) {
         console.log(err);
+      })
+      .finally(function () {
+        setLoading(false);
       });
   }
 
@@ -143,7 +148,13 @@ function PrescriptionManage() {
                 </tr>
               </thead>
               <tbody>
-                {visible.length === 0 ? (
+                {loading ? (
+                  <tr>
+                    <td colSpan={7} className="text-center py-4">
+                      <Loader />
+                    </td>
+                  </tr>
+                ) : visible.length === 0 ? (
                   <tr>
                     <td colSpan={7} className="text-center text-muted py-4">
                       No data yet.

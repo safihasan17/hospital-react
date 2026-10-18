@@ -3,6 +3,7 @@ import { Link } from "react-router";
 import { api } from "../../../api";
 import type { Patient } from "../../../interfaces/Patient";
 import ConfirmModal from "../../../components/ConfirmModoal";
+import Loader from "../../../components/Loader";
 
 
 function PatientManage() {
@@ -13,6 +14,8 @@ function PatientManage() {
     name: string;
   } | null>(null);
 
+  const [loader, setLoder] = useState(true);
+
   function getall() {
     api
       .get("patients")
@@ -22,6 +25,9 @@ function PatientManage() {
       })
       .catch(function (err) {
         console.log(err);
+      })
+      .finally(function () {
+        setLoder(false);
       });
   }
 
@@ -111,7 +117,13 @@ function PatientManage() {
                 </tr>
               </thead>
               <tbody>
-                {patients.length === 0 ? (
+                {loader ? (
+                  <tr>
+                    <td colSpan={10} className="text-center py-4">
+                      <Loader />
+                    </td>
+                  </tr>
+                ) : patients.length === 0 ? (
                   <tr>
                     <td colSpan={10} className="text-center text-muted py-4">
                       No data yet.

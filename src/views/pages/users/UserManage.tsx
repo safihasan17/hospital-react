@@ -3,9 +3,11 @@ import { Link } from "react-router";
 import { defaultUser, type User } from "../../../interfaces/User";
 import { api } from "../../../api";
 import ConfirmModal from "../../../components/ConfirmModoal";
+import Loader from "../../../components/Loader";
 
 
 function UserManage() {
+  const [loading, setLoading] = useState(true);
   const [users, setUsers] = useState<User[]>([defaultUser]);
   const [deleteTarget, setDeleteTarget] = useState<{
     id: number;
@@ -21,6 +23,9 @@ function UserManage() {
       })
       .catch(function (err) {
         console.log(err);
+      })
+      .finally(function () {
+        setLoading(false);
       });
   }
 
@@ -103,7 +108,13 @@ function UserManage() {
                 </tr>
               </thead>
               <tbody>
-                {users.map((item) => (
+                {loading ? (
+                  <tr>
+                    <td colSpan={6} className="text-center py-4">
+                      <Loader />
+                    </td>
+                  </tr>
+                ) : users.map((item) => (
                   <tr className="align-middle" key={item.id}>
                     <td>{item.name}</td>
                     <td>{item.email}</td>

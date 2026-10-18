@@ -5,8 +5,10 @@ import type { PrescriptionMedicine } from "../../../interfaces/PrescriptionMedic
 import { usePrescriptionMedicineOptions } from "../../../hooks/UsePrescriptionMedicineOptions";
 import { onlyDate } from "../../../utils/format";
 import ConfirmModal from "../../../components/ConfirmModoal";
+import Loader from "../../../components/Loader";
 
 function PrescriptionMedicineManage() {
+  const [loading, setLoading] = useState(true);
   const { prescriptions } = usePrescriptionMedicineOptions();
   const [rows, setRows] = useState<PrescriptionMedicine[]>([]);
   const [prescriptionId, setPrescriptionId] = useState("");
@@ -27,6 +29,9 @@ function PrescriptionMedicineManage() {
       })
       .catch(function (err) {
         console.log(err);
+      })
+      .finally(function () {
+        setLoading(false);
       });
   }, [prescriptionId]);
 
@@ -153,7 +158,13 @@ function PrescriptionMedicineManage() {
                 </tr>
               </thead>
               <tbody>
-                {visible.length === 0 ? (
+                {loading ? (
+                  <tr>
+                    <td colSpan={6} className="text-center py-4">
+                      <Loader />
+                    </td>
+                  </tr>
+                ) : visible.length === 0 ? (
                   <tr>
                     <td colSpan={6} className="text-center text-muted py-4">
                       No data yet.

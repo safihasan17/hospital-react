@@ -3,8 +3,10 @@ import { Link } from "react-router";
 import { api } from "../../../../api";
 import type { Ward } from "../../../../interfaces/Ward";
 import ConfirmModal from "../../../../components/ConfirmModoal";
+import Loader from "../../../../components/Loader";
 
 function WardManage() {
+  const [loading, setLoading] = useState(true);
   const [wards, setWards] = useState<Ward[]>([]);
   const [stats, setStats] = useState({ total: 0, floors: 0, types: 0 });
   // ward_id -> { free, total } (beds API theke hishab kori)
@@ -31,6 +33,9 @@ function WardManage() {
       })
       .catch(function (err) {
         console.log(err);
+      })
+      .finally(function () {
+        setLoading(false);
       });
 
     api
@@ -164,7 +169,13 @@ function WardManage() {
                 </tr>
               </thead>
               <tbody>
-                {visible.length === 0 ? (
+                {loading ? (
+                  <tr>
+                    <td colSpan={5} className="text-center py-4">
+                      <Loader />
+                    </td>
+                  </tr>
+                ) : visible.length === 0 ? (
                   <tr>
                     <td colSpan={5} className="text-center text-muted py-4">
                       No data yet.

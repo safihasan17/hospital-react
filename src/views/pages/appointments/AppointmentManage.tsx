@@ -8,10 +8,12 @@ import {
   type Appointment,
 } from "../../../interfaces/Appointment";
 import ConfirmModal from "../../../components/ConfirmModoal";
+import Loader from "../../../components/Loader";
 
 const onlyDate = (value?: string | null) => (value ?? "").split("T")[0];
 
 function AppointmentManage() {
+  const [loading, setLoading] = useState(true);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [stats, setStats] = useState({
     today: 0,
@@ -40,6 +42,9 @@ function AppointmentManage() {
       })
       .catch(function (err) {
         console.log(err);
+      })
+      .finally(function () {
+        setLoading(false);
       });
   }, [search, status]);
 
@@ -161,7 +166,13 @@ function AppointmentManage() {
                 </tr>
               </thead>
               <tbody>
-                {appointments.length === 0 ? (
+                {loading ? (
+                  <tr>
+                    <td colSpan={7} className="text-center py-4">
+                      <Loader />
+                    </td>
+                  </tr>
+                ) : appointments.length === 0 ? (
                   <tr>
                     <td colSpan={7} className="text-center text-muted py-4">
                       No data yet.

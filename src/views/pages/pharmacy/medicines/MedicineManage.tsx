@@ -8,8 +8,10 @@ import {
 } from "../../../../interfaces/Medicine";
 import { money } from "../../../../utils/format";
 import ConfirmModal from "../../../../components/ConfirmModoal";
+import Loader from "../../../../components/Loader";
 
 function MedicineManage() {
+  const [loading, setLoading] = useState(true);
   const [medicines, setMedicines] = useState<Medicine[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
   const [lowStockLimit, setLowStockLimit] = useState(10);
@@ -38,6 +40,9 @@ function MedicineManage() {
       })
       .catch(function (err) {
         console.log(err);
+      })
+      .finally(function () {
+        setLoading(false);
       });
   }, [search, category, stock]);
 
@@ -177,7 +182,13 @@ function MedicineManage() {
                 </tr>
               </thead>
               <tbody>
-                {medicines.length === 0 ? (
+                {loading ? (
+                  <tr>
+                    <td colSpan={6} className="text-center py-4">
+                      <Loader />
+                    </td>
+                  </tr>
+                ) : medicines.length === 0 ? (
                   <tr>
                     <td colSpan={6} className="text-center text-muted py-4">
                       No data yet.

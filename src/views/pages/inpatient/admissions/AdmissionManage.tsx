@@ -8,8 +8,10 @@ import {
 } from "../../../../interfaces/Admission";
 import { formatDateTime } from "../../../../utils/format";
 import ConfirmModal from "../../../../components/ConfirmModoal";
+import Loader from "../../../../components/Loader";
 
 function AdmissionManage() {
+  const [loading, setLoading] = useState(true);
   const [admissions, setAdmissions] = useState<Admission[]>([]);
   const [stats, setStats] = useState({ total: 0, admitted: 0, discharged: 0 });
   const [search, setSearch] = useState("");
@@ -33,6 +35,9 @@ function AdmissionManage() {
       })
       .catch(function (err) {
         console.log(err);
+      })
+      .finally(function () {
+        setLoading(false);
       });
   }
 
@@ -173,7 +178,13 @@ function AdmissionManage() {
                 </tr>
               </thead>
               <tbody>
-                {visible.length === 0 ? (
+                {loading ? (
+                  <tr>
+                    <td colSpan={7} className="text-center py-4">
+                      <Loader />
+                    </td>
+                  </tr>
+                ) : visible.length === 0 ? (
                   <tr>
                     <td colSpan={7} className="text-center text-muted py-4">
                       No data yet.

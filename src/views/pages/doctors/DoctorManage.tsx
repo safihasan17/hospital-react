@@ -3,9 +3,11 @@ import { Link } from "react-router";
 import { api } from "../../../api";
 import { doctorImageUrl, type Doctor } from "../../../interfaces/Doctor";
 import ConfirmModal from "../../../components/ConfirmModoal";
+import Loader from "../../../components/Loader";
 
 
 function DoctorManage() {
+  const [loading, setLoading] = useState(true);
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [total, setTotal] = useState(0);
   const [deleteTarget, setDeleteTarget] = useState<{
@@ -22,6 +24,9 @@ function DoctorManage() {
       })
       .catch(function (err) {
         console.log(err);
+      })
+      .finally(function () {
+        setLoading(false);
       });
   }
 
@@ -107,7 +112,13 @@ function DoctorManage() {
                 </tr>
               </thead>
               <tbody>
-                {doctors.length === 0 ? (
+                {loading ? (
+                  <tr>
+                    <td colSpan={6} className="text-center py-4">
+                      <Loader />
+                    </td>
+                  </tr>
+                ) : doctors.length === 0 ? (
                   <tr>
                     <td colSpan={6} className="text-center text-muted py-4">
                       No data yet.

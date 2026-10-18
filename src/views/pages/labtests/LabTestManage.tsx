@@ -4,8 +4,10 @@ import { api } from "../../../api";
 import type { LabTest } from "../../../interfaces/LabTest";
 import { money } from "../../../utils/format";
 import ConfirmModal from "../../../components/ConfirmModoal";
+import Loader from "../../../components/Loader";
 
 function LabTestManage() {
+  const [loading, setLoading] = useState(true);
   const [labTests, setLabTests] = useState<LabTest[]>([]);
   const [total, setTotal] = useState(0);
   const [search, setSearch] = useState("");
@@ -24,6 +26,9 @@ function LabTestManage() {
       })
       .catch(function (err) {
         console.log(err);
+      })
+      .finally(function () {
+        setLoading(false);
       });
   }
 
@@ -116,7 +121,13 @@ function LabTestManage() {
                 </tr>
               </thead>
               <tbody>
-                {visible.length === 0 ? (
+                {loading ? (
+                  <tr>
+                    <td colSpan={4} className="text-center py-4">
+                      <Loader />
+                    </td>
+                  </tr>
+                ) : visible.length === 0 ? (
                   <tr>
                     <td colSpan={4} className="text-center text-muted py-4">
                       No data yet.

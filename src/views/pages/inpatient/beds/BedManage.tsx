@@ -8,8 +8,10 @@ import {
 } from "../../../../interfaces/Bed";
 import { useBedOptions } from "../../../../hooks/UseBedOptions";
 import ConfirmModal from "../../../../components/ConfirmModoal";
+import Loader from "../../../../components/Loader";
 
 function BedManage() {
+  const [loading, setLoading] = useState(true);
   const { wards } = useBedOptions();
   const [beds, setBeds] = useState<Bed[]>([]);
   const [stats, setStats] = useState({
@@ -41,6 +43,9 @@ function BedManage() {
       })
       .catch(function (err) {
         console.log(err);
+      })
+      .finally(function () {
+        setLoading(false);
       });
   }, [wardId, status]);
 
@@ -185,7 +190,13 @@ function BedManage() {
                 </tr>
               </thead>
               <tbody>
-                {visible.length === 0 ? (
+                {loading ? (
+                  <tr>
+                    <td colSpan={4} className="text-center py-4">
+                      <Loader />
+                    </td>
+                  </tr>
+                ) : visible.length === 0 ? (
                   <tr>
                     <td colSpan={4} className="text-center text-muted py-4">
                       No data yet.

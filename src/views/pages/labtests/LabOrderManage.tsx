@@ -8,8 +8,10 @@ import {
 } from "../../../interfaces/LabOrder";
 import { onlyDate } from "../../../utils/format";
 import ConfirmModal from "../../../components/ConfirmModoal";
+import Loader from "../../../components/Loader";
 
 function LabOrderManage() {
+  const [loading, setLoading] = useState(true);
   const [orders, setOrders] = useState<LabOrder[]>([]);
   const [stats, setStats] = useState({
     pending: 0,
@@ -39,6 +41,9 @@ function LabOrderManage() {
       })
       .catch(function (err) {
         console.log(err);
+      })
+      .finally(function () {
+        setLoading(false);
       });
   }
 
@@ -177,7 +182,13 @@ function LabOrderManage() {
                 </tr>
               </thead>
               <tbody>
-                {visible.length === 0 ? (
+                {loading ? (
+                  <tr>
+                    <td colSpan={7} className="text-center py-4">
+                      <Loader />
+                    </td>
+                  </tr>
+                ) : visible.length === 0 ? (
                   <tr>
                     <td colSpan={7} className="text-center text-muted py-4">
                       No data yet.

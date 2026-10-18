@@ -3,6 +3,11 @@ import axios from "axios";
 export const baseUrl = "http://laravel_api_hospital.test/";
 export const baseUrlApi = `${baseUrl}api/`;
 
+//hosting
+// export const baseUrl = "https://laravelapi.safiwebapp.xyz/";
+// export const baseUrlApi = `${baseUrl}api/`;
+
+
 //home
 // export const baseUrl = "http://react-hospital-api.test/";
 // export const baseUrlApi = `${baseUrl}api/`;
